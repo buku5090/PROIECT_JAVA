@@ -1,2 +1,2 @@
 # PROIECT_JAVA
-Proiect java - 2021 - Biblioteca
+Am reconfigurat toata ierarhia si am rezolvat problemele puse in evidenta din etapa 1.
