@@ -1,0 +1,17 @@
+Accesare informatii Biblioteca Nationala Nicolae Iorga
+lista biblioteca unde adaug cititori si angajati
+csv carti
+csv carti imprumutate
+lista carti disponibile
+csv carti scrise
+csv autori
+
+biblioteca 
+carte - csv + lista de cn a fost imprutata
+autor - csv - lsita carti
+sectiune - aici folosesc sortul
+client
+angajat
+contact - csv
+*menu* - csv
+persoana - client si angajat
