@@ -8,9 +8,14 @@ import persoana.Autor;
 import persoana.Client;
 import rating.Rating;
 
+import javax.swing.border.TitledBorder;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
+import java.sql.SQLOutput;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -18,14 +23,13 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 public class Servicii {
-    private Servicii(){
+    private Servicii() throws IOException {
         ;
     }
 
     private static Servicii single_instance=null;
 
-    public static Servicii getInstance()
-    {
+    public static Servicii getInstance() throws IOException {
         if(single_instance==null)
             single_instance=new Servicii();
         return single_instance;
@@ -40,7 +44,7 @@ public class Servicii {
     }
 
 
-    public void afisare() throws IOException {
+    public void afisare() throws IOException, SQLException {
         System.out.println("\nBIBLIOTECA NATIONALA NICOLAE IORGA\n");
         System.out.println("1. Fa-ti abonament!");
         System.out.println("2. Aflati daca biblioteca este deschisa.");
@@ -53,11 +57,15 @@ public class Servicii {
         System.out.println("9. Cautati o carte, dupa nume, in biblioteca.");
         System.out.println("10. Depuneti o plangere.");
         System.out.println("11. Contact.");
+        System.out.println("12. Iesire din meniu.");
 
-        //formatare data
+        //initiere jbdc
+        DbConnection dbc=new DbConnection();
+        String col_val;
+        ResultSet rs;
+        ResultSetMetaData rsmd;
 
-
-        //initiere din pachetul initiere
+        //initiere din pachetul initiere - OLD
         Initiere initiere=Initiere.getInstance();
         initiere.initiere_liste();
 
@@ -71,11 +79,12 @@ public class Servicii {
         ArrayList<Autor>autori_lista=new ArrayList<Autor>();
 
         //scriere in fisiere
-        FileWriter fisier_scriere_clienti=new FileWriter("src/clienti.csv",true);
+        /*FileWriter fisier_scriere_clienti=new FileWriter("src/clienti.csv",true);
         FileWriter fisier_scriere_plangeri=new FileWriter("src/plangeri.csv",true);
         FileWriter fisier_scriere_carti=new FileWriter("src/carti_biblioteca.csv",true);
-        FileWriter fisier_scriere_carti_imprumutate=new FileWriter("src/carti_imprumutate.csv",true);
+        FileWriter fisier_scriere_carti_imprumutate=new FileWriter("src/carti_imprumutate.csv",true);*/
         FileWriter fisier_logs = new FileWriter("src/logs.txt",true);
+
 
         //introducere date in liste
         clienti_lista= initiere.returnare_lista_clienti();
@@ -83,7 +92,7 @@ public class Servicii {
         carti_lista= initiere.returnare_lista_carti();
         carti_imprumutate_lista= initiere.returnare_lista_carti_imprumutate();
         rating_carte_lista= initiere.returnare_lista_rating_carti();
-        rating_autor_lista= initiere.returnare_lista_rating_autori();
+//        rating_autor_lista= initiere.returnare_lista_rating_autori();
         autori_lista=initiere.returnare_lista_autori();
 
         //retin alegerea user-ului
@@ -101,7 +110,6 @@ public class Servicii {
             if(alg==1)
             {
                 fisier_logs.write(dtf.format(get_timp())+" A fost aleasa optiunea 'Fa-ti un abonament'\n");
-
                 //citire
                 System.out.println("Introdu CNP-ul:");
                 Scanner myscanner=new Scanner(System.in);
@@ -133,11 +141,14 @@ public class Servicii {
                     clienti_lista.add(aux);
 
                     //scriere in fisier
-                    fisier_scriere_clienti.write("\n"+nume+","+cnp);
-                    fisier_scriere_clienti.close();
+                    /*fisier_scriere_clienti.write("\n"+nume+","+cnp);
+                    fisier_scriere_clienti.close();*/
 
                     System.out.println("Felicitari! Ti-ai creat un abonament!");
                     fisier_logs.write(dtf.format(get_timp())+" Utilizatorul a creat un abonament cu numele "+nume+" si cnp-ul "+cnp+"\n");
+
+                    //inserare in mysql
+                    dbc.update_database("insert into clienti values (NULL,\""+aux.get_nume()+"\",\""+aux.get_cnp()+"\")");
                 }
 
             }
@@ -151,11 +162,11 @@ public class Servicii {
                 int ora= Integer.parseInt(sdf.format(cal.getTime()));
                 if(ora>=9&&ora<=18)
                 {
-                    System.out.println("Biblioteca este deschisa!");
+                    System.out.println("Biblioteca este deschisa astazi pana la ora 18.");
                     fisier_logs.write(dtf.format(get_timp())+" Biblioteca a fost deschisa\n");
                 }
                 else {
-                    System.out.println("Biblioteca este inchisa! Incercati maine!");
+                    System.out.println("Biblioteca este inchisa! Reveniti maine in intervalul orar 9:00-18:00");
                     fisier_logs.write(dtf.format(get_timp())+" Biblioteca a fost inchisa\n");
                 }
             }
@@ -234,20 +245,24 @@ public class Servicii {
                         carti_lista.set(i,carte_aux);
 
                         ok=0;
+
+                        dbc.update_database("update carti \n" +
+                                "set suma_rating=suma_rating+"+nota+", nr_rating=nr_rating+1\n" +
+                                "where ID="+carte_aux.get_id_carte());
                     }
                 }
                 if(ok==0)
                 {
-                    FileWriter fisier_golire=new FileWriter("src/carti_biblioteca.csv");
-                    fisier_golire.close();
+//                    FileWriter fisier_golire=new FileWriter("src/carti_biblioteca.csv");
+//                    fisier_golire.close();
                     for(int i=0;i<carti_lista.size();i++)
                     {
                         raiting_aux=rating_carte_lista.get(i);
                         carte_aux=carti_lista.get(i);
-                        fisier_scriere_carti.write(carte_aux.get_id_carte()+","+carte_aux.get_titlu()+","+carte_aux.get_autor()+","+carte_aux.get_an_ap()+","+raiting_aux.get_suma()+","+raiting_aux.get_nr()+"\n");
+//                      fisier_scriere_carti.write(carte_aux.get_id_carte()+","+carte_aux.get_titlu()+","+carte_aux.get_autor()+","+carte_aux.get_an_ap()+","+raiting_aux.get_suma()+","+raiting_aux.get_nr()+"\n");
 
                     }
-                    fisier_scriere_carti.close();
+//                    fisier_scriere_carti.close();
                     System.out.println("Felicitari! Ati oferit nota "+nota+" cartii '"+titlu+"'!");
                 }
                 else {
@@ -286,10 +301,10 @@ public class Servicii {
                         carte2_aux=carti_lista.get(i);
                         if(titlu.equals(carte2_aux.get_titlu()))
                         {
-                            System.out.println("Cartea este disponibila! Puteti sa o ridicati oricand intre orele 9:00-18:00!");
-                            fisier_logs.write(dtf.format(get_timp())+" Cartea ceruta este disponibila si a fost imprumuatata"+"\n");
-                            fisier_scriere_carti_imprumutate.write(carte2_aux.get_id_carte()+","+carte2_aux.get_titlu()+","+carte2_aux.get_autor()+"\n");
-                            fisier_scriere_carti_imprumutate.close();
+                            System.out.println("Cartea a fost rezervata! Puteti sa o ridicati oricand intre orele 9:00-18:00!");
+                            fisier_logs.write(dtf.format(get_timp())+" Cartea ceruta a fost rezervata"+"\n");
+                            /*fisier_scriere_carti_imprumutate.write(carte2_aux.get_id_carte()+","+carte2_aux.get_titlu()+","+carte2_aux.get_autor()+"\n");
+                            fisier_scriere_carti_imprumutate.close();*/
                             ok2=0;
                         }
                     }
@@ -320,16 +335,22 @@ public class Servicii {
                         fisier_logs.write(dtf.format(get_timp())+" Cartea a fost returnata\n");
                         System.out.println("Carte returnata!");
                         carti_imprumutate_lista.remove(i);
+
+                        dbc.update_database("delete from carti_imprumutate\n"+
+                                "where ID="+carte_aux.get_id_carte());
                         ok=0;
                     }
                 }
                 if(ok==0)
                 {
-                    FileWriter fisier_golire=new FileWriter("carti_imprumutate.csv");
-                    fisier_golire.write("");
-                    fisier_golire.close();
+                    /*FileWriter fisier_golire=new FileWriter("src/carti_imprumutate.csv");
+                    for(int i=0;i<carti_imprumutate_lista.size();i++)
+                    {
+                        carte_aux=carti_imprumutate_lista.get(i);
+                        fisier_golire.write(carte_aux.get_id_carte()+","+carte_aux.get_titlu()+","+carte_aux.get_autor()+"\n");
 
-                    //for
+                    }
+                    fisier_golire.close();*/
                 }
                 else
                 {
@@ -347,9 +368,7 @@ public class Servicii {
                 for(int i=0;i<autori_lista.size();i++)
                 {
                     autor=autori_lista.get(i);
-                    System.out.print(autor.get_nume()+", nascut in "+autor.get_tara_origine()+" - ");
-                    System.out.printf("%.2f",autor.get_rating());
-                    System.out.print("/10\n");
+                    System.out.print(autor.get_nume()+" - "+autor.get_tara_origine()+"\n");
 
                     for(int j=0;j< carti_lista.size();j++)
                     {
@@ -380,6 +399,7 @@ public class Servicii {
                     if(titlu.equals(carte_aux.get_titlu()))
                     {
                         ok=0;
+                        carte2_aux=carte_aux;
                     }
                 }
                 if(ok==1) {
@@ -388,6 +408,13 @@ public class Servicii {
                 }
                 else
                 {
+                    System.out.println("Titlu: "+carte2_aux.get_titlu());
+                    System.out.println("Autor: "+carte2_aux.get_autor());
+                    System.out.println("An aparitie: "+carte2_aux.get_an_ap());
+                    System.out.print("Rating: ");
+                    System.out.printf("%.2f",carte2_aux.get_rating());
+                    System.out.print("/10\n\n");
+                    carte2_aux=new Carte(0,"","",0,0);
                     for(int i=0;i<carti_imprumutate_lista.size();i++)
                     {
                         carte2_aux=carti_imprumutate_lista.get(i);
@@ -401,8 +428,8 @@ public class Servicii {
                         fisier_logs.write(dtf.format(get_timp())+" Cartea este disponibila\n");
                     }
                     else {
-                        System.out.println("Detinem aceasta carte, dar este momentat indispobila!");
-                        fisier_logs.write(dtf.format(get_timp())+" Cartea este momentan indisponibila\n");
+                        System.out.println("Detinem aceasta carte, dar este momentat imprumutata!");
+                        fisier_logs.write(dtf.format(get_timp())+" Cartea este momentan imprumutata\n");
                     }
                 }
             }
@@ -413,8 +440,8 @@ public class Servicii {
                 Scanner myScanner=new Scanner(System.in);
                 String plangere=myScanner.nextLine();
 
-                fisier_scriere_plangeri.write(plangere +","+ LocalDate.now()+"\n");
-                fisier_scriere_plangeri.close();
+                /*fisier_scriere_plangeri.write(plangere +","+ LocalDate.now()+"\n");
+                fisier_scriere_plangeri.close();*/
                 fisier_logs.write(dtf.format(get_timp())+" Utilizatorul a depus o plangere - "+plangere+"\n");
                 System.out.println("Va multumim! Vom incerca sa rememdiem problema cat mai rapid!");
             }

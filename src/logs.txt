@@ -4,3 +4,37 @@
 
 __________________________________________________
 
+2021/05/24 09:46:35 A fost aleasa optiunea 'Fa-ti un abonament'
+2021/05/24 09:46:45 Utilizatorul a creat un abonament cu numele adasdas si cnp-ul 9059454
+
+__________________________________________________
+
+2021/05/24 15:01:15 A fost aleasa optiunea 'Contact'
+
+__________________________________________________
+
+2021/05/24 15:05:52 A fost aleasa optiunea 'Fa-ti un abonament'
+2021/05/24 15:06:14 Utilizatorul a creat un abonament cu numele Dana Budeanu si cnp-ul 6001988569831
+
+__________________________________________________
+
+2021/05/24 15:06:37 A fost aleasa optiunea 'Contact'
+2021/05/24 15:06:39 A fost aleasa optiunea 'Contact'
+2021/05/24 15:06:44 A fost aleasa optiunea 'Afisati angajatii bibliotecii si posturile acestora'
+
+__________________________________________________
+
+2021/05/24 15:11:02 A fost aleasa optiunea 'Afisati autorii si cartile scrise de acestia'
+
+__________________________________________________
+
+2021/05/24 15:31:41 A fost aleasa optiunea 'Contact'
+
+__________________________________________________
+
+2021/05/24 15:42:25 A fost aleasa optiunea 'Cautati o carte, dupa nume, in biblioteca'
+2021/05/24 15:42:27 Utilizatorul a introdus ca nume pentru carte: Lolita
+2021/05/24 15:42:27 Cartea este disponibila
+
+__________________________________________________
+

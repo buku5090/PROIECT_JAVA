@@ -49,6 +49,6 @@ public class Carte implements Comparable<Carte>{
     @Override
     public String toString()
     {
-        return "xd";
+        return "";
     }
 }
