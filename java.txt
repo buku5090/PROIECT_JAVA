@@ -7,9 +7,8 @@ csv carti scrise
 csv autori
 
 biblioteca 
-carte - csv + lista de cn a fost imprutata
-autor - csv - lsita carti
-sectiune - aici folosesc sortul
+carte - csv + lista de cn a fost imprutata - aici folosesc sort-ul
+autor - csv - lista carti
 client
 angajat
 contact - csv
